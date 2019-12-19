@@ -14,7 +14,7 @@ const height = canvas.height = window.innerHeight;
 let pivx = width/2;
 let pivy = height/4;
 let g = 2;
-function pendulum(angle1,angle2)
+function dpendulum(angle1,angle2)
 {
     this.color = 'rgb(' + random(0,255) + ',' + random(0,255) + ',' + random(0,255) +')' ;
 
@@ -36,36 +36,42 @@ function pendulum(angle1,angle2)
     this.angularacc2 = 0;
     this.bob2posx = this.bob1posx + this.string2 * Math.sin(this.angle2);
     this.bob2posy = this.bob1posy + this.string2 * Math.cos(this.angle2);
+    this.history = [];
       
 }
 
-pendulum.prototype.draw = function()
+dpendulum.prototype.draw = function()
 {
     ctx.beginPath();
     //bob1
     ctx.fillStyle = this.color;
-    ctx.arc(this.bob1posx,this.bob1posy,10,0,2*Math.PI);
+    ctx.arc(this.bob1posx,this.bob1posy,15,0,2*Math.PI);
     ctx.fill();
     //bob2
-    ctx.arc(this.bob2posx,this.bob2posy,10,0,2*Math.PI);
+    ctx.arc(this.bob2posx,this.bob2posy,15,0,2*Math.PI);
     ctx.fill();
     ctx.beginPath();
     if (!hide)
     {
     //string1
+    ctx.beginPath();
     ctx.moveTo(pivx,pivy);
     ctx.lineTo(this.bob1posx,this.bob1posy);
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = '#F0F7D4';
+    ctx.stroke();
     //string2
+    ctx.beginPath();
     ctx.moveTo(this.bob1posx,this.bob1posy);
     ctx.lineTo(this.bob2posx,this.bob2posy);
-    //color the string
-    ctx.strokeStyle = 'yellow';
+    ctx.strokeStyle = '#347B98';
+    ctx.lineWidth = 4;
     ctx.stroke();
     }
     
 }
 
-pendulum.prototype.update = function()
+dpendulum.prototype.update = function()
 {
 
     //using formula to calculate angular acceleration,angular velocity and angles
@@ -96,6 +102,10 @@ pendulum.prototype.update = function()
     this.bob1posy = pivy + this.string1 * Math.cos(this.angle1);
     this.bob2posx = this.bob1posx + this.string2 * Math.sin(this.angle2);
     this.bob2posy = this.bob1posy + this.string2 * Math.cos(this.angle2);
+    
+    //update history
+    this.history.push([this.bob2posx, this.bob2posy]);
+    this.history = this.history.slice(-50);
 
 }
 
@@ -105,7 +115,7 @@ let hide = false;
 
 const many = document.querySelector('h1');
 
-let bob = new pendulum(90,45); //angles provided in degrees
+let bob = new dpendulum(90,45); //angles provided in degrees
 let bobs = [];
 
 manyStart = function()
@@ -114,7 +124,7 @@ manyStart = function()
     let bobby;
     for (let i = 0; i<3 ; i++)
     {
-        bobby = new pendulum(90,i+45);  // each ball only slightly different position from another 
+        bobby = new dpendulum(90,i+45);  // each ball only slightly different position from another 
         bobs.push(bobby);
     }
 
@@ -133,7 +143,7 @@ Hidestrings = function()
     
 addEventListener('click',manyStart);
 
-
+const DRAW_TRAIL =true;
 
 function loop()
 {
@@ -155,6 +165,20 @@ function loop()
             bobs[j].update();
         }
     }
+    
+    if(DRAW_TRAIL)
+    {
+        ctx.beginPath();
+        ctx.strokeStyle = '#FCBA12';
+        ctx.moveTo(bob.history[0][0], bob.history[0][1]);
+        for(const point of bob.history)
+            {
+                ctx.lineTo(point[0], point[1]);
+
+            }
+        ctx.stroke();
+    }
+
 
     requestAnimationFrame(loop);
 
